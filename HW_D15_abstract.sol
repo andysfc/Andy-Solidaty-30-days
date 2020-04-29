@@ -13,12 +13,12 @@ contract Bank {
         _Withdraw(count);
     }
     
-    function _Deposit(uint256 count) public internal {
+    function _Deposit(uint256 count) internal {
         _depositors[msg.sender] += count;
     }
     
-    function _Withdraw(uint256 count) public internal {
-        require(count <= _depositors[msg.sender], "Insufficient balance.")
+    function _Withdraw(uint256 count) internal {
+        require(count <= _depositors[msg.sender], "Insufficient balance.");
         _depositors[msg.sender] -= count;
     }
     
@@ -32,10 +32,10 @@ contract SimpleBank is Bank {
 
 contract HimoBank is Bank {
     function Deposit(uint256 count) public {
-        _Deposit(count - 10);
+        _Deposit(count*11/10);
     }
     
     function Withdraw(uint256 count) public {
-        _Withdraw(count - 10);
+        _Withdraw(count+10);
     }
 }
