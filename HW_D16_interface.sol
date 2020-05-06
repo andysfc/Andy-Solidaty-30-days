@@ -1,10 +1,18 @@
 pragma solidity >=0.4.22 <0.6.0;
 
 interface BankIntf {
+    modifier over1ether() {
+        require(msg.value >= 1 ether, "Need to deposit at least 1 ether.");
+        _;
+    }
+    //modifier over10ether();
+
     // TODO: define interface of Deposit(), Withdraw(), GetBalance()
     function Deposit() external payable returns (uint256 balance);
     function Withdraw(uint256 valueInWei) external returns (uint256 balance);
     function GetBalance() external view returns (uint256);
+    
+    function GetBankBalance() external view returns (uint256);
 }
 
 contract AbstractBank is BankIntf{
@@ -49,7 +57,7 @@ contract SimpleBank is AbstractBank {
 contract HimoBank is AbstractBank {
     // TODO: Charge 1% fee from value paid to Deposit() 
     //       Charge additional 1% fee of value to Withdraw()
-    function Deposit() public payable returns (uint256 balance) {
+    function Deposit() public payable over1ether returns (uint256 balance) {
         _Deposit(msg.value*99/100);
         return GetBalance();
     }
