@@ -1,7 +1,7 @@
 pragma solidity >=0.4.22 <0.6.0;
 
 interface BankIntf {
-    // TODO
+    // TODO: define interface of Deposit(), Withdraw(), GetBalance()
     function Deposit() external payable returns (uint256 balance);
     function Withdraw(uint256 valueInWei) external returns (uint256 balance);
     function GetBalance() external view returns (uint256);
@@ -47,8 +47,8 @@ contract SimpleBank is AbstractBank {
 }
 
 contract HimoBank is AbstractBank {
-    // TODO
-    // Charge 1% fee for Deposit & Withdraw
+    // TODO: Charge 1% fee from value paid to Deposit() 
+    //       Charge additional 1% fee of value to Withdraw()
     function Deposit() public payable returns (uint256 balance) {
         _Deposit(msg.value*99/100);
         return GetBalance();
