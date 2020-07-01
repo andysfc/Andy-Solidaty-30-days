@@ -1,6 +1,6 @@
 pragma solidity ^0.6.0;
 
-import "HW_D20_interface.sol";
+import "HW_D20_IECR20.sol";
 import 'https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/SafeMath.sol';
 
 contract NewToken is IERC20 {
