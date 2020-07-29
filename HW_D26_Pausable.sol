@@ -3,7 +3,7 @@ pragma solidity ^0.6.0;
 // ERC20 Mintable
 
 import 'https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/SafeMath.sol';
-import "HW_D20.sol";
+import "HW_D20_interface.sol";
 
 // ERC20 Optional
 //  name
@@ -12,17 +12,25 @@ import "HW_D20.sol";
 //
 // https://etherscan.io/token/0xB8c77482e45F1F44dE1745F52C74426C631bDD52#readContract
 
-contract HET is NewToken {
+contract HET is IERC20 {
     string public constant name = "Himo Evil Token";
     uint8 constant decimals = 18;
     string public constant symbol = "HET";
     
+    using SafeMath for uint256;
+
+    bool private _isPaused = false;
     address _owner;
+    
+    uint256 _totalSupply = 50000;
+    uint256 _usedSupply = 0;
+    mapping (address => uint256) _balance;
+    mapping (address => mapping (address => uint256)) _allowance;
+    
     mapping (address => uint256) _minterQuota;
     mapping (address => uint256) _burnerQuota;
     uint256 public _totalMintable = 0;
     uint256 public _totalBurnable = 0;
-    bool private _isPaused = false;
     
     constructor() public {
         _owner = msg.sender;
@@ -53,9 +61,11 @@ contract HET is NewToken {
     
     function pause() public onlyOwner onlyNotPaused returns (bool) {
         _isPaused = true;
+        return true;
     }
     function unpause() public onlyOwner onlyPaused returns (bool) {
         _isPaused = false;
+        return true;
     }
     
     // ERC20 Optional
@@ -67,7 +77,67 @@ contract HET is NewToken {
     //function allowance(address tokenOwner, address spender) external view returns (uint256 remaining);
     //function approve(address spender, uint256 tokens) external returns (bool success);
     //function transferFrom(address from, address to, uint256 tokens) external returns (bool success);
+
+
+    function totalSupply() external view override returns (uint256)
+    {
+        return _totalSupply;
+    }
     
+    function balanceOf(address tokenOwner) external view override returns (uint256 balance)
+    {
+        return _balance[tokenOwner];
+    }
+    
+    function buyTokens(uint256 tokens) external onlyNotPaused returns (bool success)
+    {   
+        uint256 availSupply = _totalSupply.sub(_usedSupply);
+        if (availSupply < tokens)
+            return false;
+        _totalSupply = _totalSupply.sub(tokens);
+        _balance[msg.sender] = _balance[msg.sender].add(tokens);
+        return true;
+    }
+
+    function transfer(address to, uint256 tokens) external override onlyNotPaused returns (bool success)
+    {   
+        if (_balance[msg.sender] < tokens)
+            return false;
+        _balance[msg.sender] = _balance[msg.sender].sub(tokens);
+        _balance[to] = _balance[to].add(tokens);
+        emit Transfer(msg.sender, to, tokens);
+        return true;
+    }
+    
+    function allowance(address tokenOwner, address spender) external view override returns (uint256 remaining)
+    {
+        return _allowance[tokenOwner][spender];
+    }
+    
+    function approve(address spender, uint256 tokens) external override onlyNotPaused returns (bool success)
+    {
+        if (_balance[msg.sender] < tokens) 
+            return false;
+        uint256 allow = _allowance[msg.sender][spender];
+        _allowance[msg.sender][spender] = allow.add(tokens);
+        emit Approval(msg.sender, spender, tokens);
+        return true;
+    }
+    
+    function transferFrom(address from, address to, uint256 tokens) external override onlyNotPaused returns (bool success)
+    {
+        uint256 allow = _allowance[from][msg.sender];
+        if (allow < tokens)
+            return false;
+        if (_balance[from] < tokens)
+            return false;
+        _balance[from] = _balance[from].sub(tokens);
+        _balance[to] = _balance[to].add(tokens);
+        _allowance[from][msg.sender] = allow.sub(tokens);
+        emit Transfer(from, to, tokens);
+        return true;
+    }
+        
     // Implement mint
     function mint(address account, uint256 tokens) public onlyMinter onlyNotPaused returns (bool) {
         require(account != address(0) && account != address(this), "Invalid address");
